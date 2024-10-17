@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    string signal = "@";
+
+}
+
+@model List<BlogPostDto>
+
+<div class="HomeFeed">
+    @await Html.PartialAsync("_PostsPartial", @Model);
+</div>

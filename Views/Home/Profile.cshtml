@@ -1,0 +1,9 @@
+﻿@{
+    ViewData["Title"] = "User Profile";
+}
+
+@model List<BlogPostDto>
+
+<div class="HomeFeed">
+    @await Html.PartialAsync("_PostsPartial", @Model);
+</div>

@@ -1,0 +1,47 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    string signal = "@";
+}
+
+@model IEnumerable<BlogPostDto>
+
+@foreach (BlogPostDto blogpost in Model)
+{
+    <div class="BlogPost">
+
+        <div class="headPost">
+
+            <div class="info-bt">
+                <h3>@blogpost.Title</h3>
+                <p><a href="/blogger/@blogpost.AutherName" class="a-tag">@signal@blogpost.AutherName</a></p>
+            </div>
+
+            <div>
+                <div class="post-options">
+                    <div class="post-options-text">
+                        <p>...</p>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="options-list">
+				<div class="options-list-item">
+                    <p><a href="/edit/@blogpost.Id">Edit</a></p>
+				</div>
+				<div class="options-list-item">
+                    <p><a href="/Delete/@blogpost.Id">Delete</a></p>
+				</div>
+            </div>
+
+        </div>
+
+        <div>
+            <div class="f-s-s time-post animati"><p>@blogpost.CreationTime</p></div>
+            <p>@blogpost.Content</p>
+        </div>
+
+    </div>
+}

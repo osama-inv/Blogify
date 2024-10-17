@@ -1,0 +1,15 @@
+﻿@{
+    string signal = "@";
+}
+
+@model BlogPostDto
+
+<div class="BlogPost">
+    <div class="headPost">
+        <div class="info-bt">
+            <h3>@Model.Title</h3>
+        </div>
+        <p class="f-s-m">@Model.CreationTime</p>
+    </div>
+    <p>@Model.Content</p>
+</div>

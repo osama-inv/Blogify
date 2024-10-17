@@ -1,0 +1,43 @@
+﻿
+@{
+    ViewData["Title"] = "Sign Up";
+}
+
+@model SignUp
+
+
+<div class="Big">
+    <div class="headerClosure">
+        <h2>@ViewData["Title"]</h2>
+    </div>
+
+    <form asp-controller="Home" asp-action="SignupPost" method="post">
+        <div class="form-group">
+            <label asp-for="UserName"></label>
+            <input asp-for="UserName" class="form-control" />
+            <span asp-validation-for="UserName" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" type="password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="ConfirmPassword"></label>
+            <input asp-for="ConfirmPassword" type="password" class="form-control" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" }) 
+
+
+        <button type="submit" class="btn bg-blueviolet btn-submit">Sign Up</button>
+    </form>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
