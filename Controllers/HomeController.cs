@@ -103,11 +103,7 @@ namespace Blogify.Controllers
 
             return RedirectToAction("Login");
         }
-        [HttpGet("show")]
-        public IActionResult Show()
-        {
-            return View();
-        }
+
         public IActionResult Privacy()
         {
             return View();
