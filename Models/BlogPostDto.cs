@@ -12,8 +12,11 @@ namespace Blogify.Models
         [Required]
         [StringLength(5000, MinimumLength = 3, ErrorMessage = "Blog's Content must be at least 3 characters long.")]
         public string Content { get; set; }
+        public int NumOfLikes { get; set; }
+        public int NumOfDisLikes { get; set; }
         public string? AutherName { get; set; }
         public DateTime? CreationTime { get; set; }
+        public string IsLikedByCUser { get; set; } = "None"; // "Like", "Dislike", "None"
         public BlogPostDto()
         {
 

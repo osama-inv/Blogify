@@ -78,7 +78,7 @@ h1 {
 .BlogPost {
   padding: 10px;
   padding-bottom: 20px;
-  width: 600px;
+  width: 650px;
   box-shadow:  0 0 10px 0 rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   margin-bottom: 20px;
@@ -103,8 +103,8 @@ p {
   margin-bottom: 0;
 }
 .info-bt {
-  display: flex;
-  align-items: end;
+  /* display: flex;
+  align-items: center; */
   gap: 10px;
   /* margin-bottom: 10px; */
 }

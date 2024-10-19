@@ -282,3 +282,4 @@ C:\Users\AFE\source\repos\Blogify\obj\Debug\net8.0\refint\Blogify.dll
 C:\Users\AFE\source\repos\Blogify\obj\Debug\net8.0\Blogify.pdb
 C:\Users\AFE\source\repos\Blogify\obj\Debug\net8.0\Blogify.genruntimeconfig.cache
 C:\Users\AFE\source\repos\Blogify\obj\Debug\net8.0\ref\Blogify.dll
+C:\Users\AFE\source\repos\Blogify\obj\Debug\net8.0\Blogify.sourcelink.json

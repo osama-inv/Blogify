@@ -14,6 +14,6 @@ namespace Blogify.Models
         public DateTime CreatedAt { get; set; }
         public string AuthorId { get; set; }
         public IdentityUser Author { get; set; }
-
+        public IEnumerable<Reaction> Reactions { get; set; }
     }
 }

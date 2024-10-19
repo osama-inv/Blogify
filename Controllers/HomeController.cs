@@ -27,13 +27,17 @@ namespace Blogify.Controllers
             {
                 var blogs = _DB_Contect.Blogs.AsNoTracking()
                 .Include(b => b.Author)
+                .Include(b => b.Reactions)
                 .Select(b => new BlogPostDto()
                 {
                     Id = b.Id,
                     Title = b.Title,
                     Content = b.Content,
                     AutherName = b.Author.UserName,
-                    CreationTime = b.CreatedAt
+                    CreationTime = b.CreatedAt,
+                    NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
+                    NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None"
                 })
                 .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
                 .ToList();
@@ -102,6 +106,12 @@ namespace Blogify.Controllers
             }
 
             return RedirectToAction("Login");
+        }
+
+        [HttpGet("show")]
+        public IActionResult show()
+        {
+            return View();
         }
 
         public IActionResult Privacy()
@@ -186,6 +196,7 @@ namespace Blogify.Controllers
 
             return RedirectToAction("login");
         }
+
         [HttpGet("delete/{id}")]
         public async Task<IActionResult> delete(string id)
         {
