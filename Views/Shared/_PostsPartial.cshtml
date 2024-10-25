@@ -13,10 +13,22 @@
         <div class="headPost">
             <div class="info-bt">
                 <h3>@blogpost.Title</h3>
-                <p><a href="/blogger/@blogpost.AutherName" class="a-tag">@signal@blogpost.AutherName</a></p>
+                <p>
+                    <a href="/blogger/@blogpost.AutherName" class="a-tag">@signal@blogpost.AutherName</a>
+                    @if (blogpost.Premium)
+                    {
+                        <span class="premium">🌟</span>
+                    }
+                </p>
             </div>
             <p class="f-s-m">@blogpost.CreationTime</p>
         </div>
-        <p>@blogpost.Content</p>
+        <div class="content">
+            <p>@blogpost.Content</p>
+        </div>
+        <div class="reaction">
+            <p data-Clikes="@blogpost.NumOfLikes" data-id="@blogpost.Id" data-value="like" class="react @(blogpost.IsLikedByCUser == "Like" ? "ActedReaction" : "")">@blogpost.NumOfLikes likes</p>
+            <p data-Cdislikes="@blogpost.NumOfDisLikes" data-id="@blogpost.Id" data-value="dislike" class="react @(blogpost.IsLikedByCUser == "Dislike" ? "ActedReaction" : "")">@blogpost.NumOfDisLikes dislikes</p>
+        </div>
     </div>
 }

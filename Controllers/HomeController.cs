@@ -1,5 +1,7 @@
 using Blogify.Data;
+using Blogify.Factories;
 using Blogify.Models;
+using Blogify.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,12 +22,39 @@ namespace Blogify.Controllers
             _signInManager = signInManager;
             _DB_Contect = DB_Contect;
         }
+        public async Task<bool> IsAllOkayy()
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        public IActionResult Index()
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            if (userClaims.Any(c => c.Type == "block" && c.Value == "true"))
+            {
+                TempData["msg1"] = "Your account has been blocked";
+                return false;
+            }
+
+            return true;
+        }
+        public async Task<IActionResult> IsAllOkay()
+        {
+
+            if (!(await IsAllOkayy()))
+            {
+                return RedirectToAction("show");
+            }
+
+            return RedirectToAction("Index");
+        }
+        public async Task<IActionResult> Index()
         {
             if (User.Identity.IsAuthenticated)
             {
-                var blogs = _DB_Contect.Blogs.AsNoTracking()
+                if (!(await IsAllOkayy()))
+                {
+                    return RedirectToAction("show");
+                }
+
+                var blogs = await _DB_Contect.Blogs.AsNoTracking()
                 .Include(b => b.Author)
                 .Include(b => b.Reactions)
                 .Select(b => new BlogPostDto()
@@ -37,15 +66,316 @@ namespace Blogify.Controllers
                     CreationTime = b.CreatedAt,
                     NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
                     NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
-                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None"
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None",
+                    Premium = _DB_Contect.UserClaims.Any(c => c.UserId == b.AuthorId && c.ClaimType == "premium" && c.ClaimValue == "true")
+
                 })
                 .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
+                .ToListAsync();
+
+                var MoreLikes = blogs.OrderByDescending(b => b.NumOfLikes).Take(4).ToList();
+
+                TrendinFeed Trendin = new TrendinFeed()
+                {
+                    Feeds = blogs,
+                    Trends = MoreLikes
+                };
+
+                return View(Trendin);
+            }
+
+            return View("IndexOut");
+        }
+        [HttpPost("LogSeenBlog")]
+        public async Task LogSeenBlog(string Blogid)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var blogId = int.Parse(Blogid);
+            var here = await _DB_Contect.SeenBlogs.AnyAsync(c => c.UserId == userId && c.BlogPostId == blogId);
+
+            if (!here)
+            {
+                SeenBlog seenblog = new SeenBlog()
+                {
+                    BlogPostId = blogId,
+                    UserId = userId
+                };
+
+                var answer = await _DB_Contect.SeenBlogs.AddAsync(seenblog);
+
+                await _DB_Contect.SaveChangesAsync();
+            }
+        }
+
+        public IQueryable<SeenBlog> GetWhereUserId(string userId)
+        {
+            return _DB_Contect.SeenBlogs.AsNoTracking().Where(b => b.UserId == userId);
+        }
+        [HttpGet("popular")]
+        public async Task<IActionResult> popularBlogs()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+
+                var GetWhere = await _DB_Contect.SeenBlogs.AsNoTracking()
+                    .GroupBy(i => i.BlogPostId)
+                    .OrderByDescending(g => g.Count())
+                    .Select(group => group.Key).Take(10)
+                    .ToListAsync();
+
+
+                var blogs = await _DB_Contect.Blogs.AsNoTracking()
+                .Where(b => GetWhere.Contains(b.Id))
+                .Include(b => b.Author)
+                .Select(b => new BlogPostDto()
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Content = b.Content,
+                    AutherName = b.Author.UserName,
+                    CreationTime = b.CreatedAt,
+                    Premium = _DB_Contect.UserClaims.Any(c => c.UserId == b.AuthorId && c.ClaimType == "premium" && c.ClaimValue == "true"),
+                    NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
+                    NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None",
+                })
+                //   .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
+                .ToListAsync();
+
+                return View(blogs);
+            }
+
+            return RedirectToAction("Login");
+        }
+        [HttpGet("SeenBlogs")]
+        public async Task<IActionResult> SeenBlogs()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var GetWhere = GetWhereUserId(userId).Select(s => s.BlogPostId).ToList();
+
+
+                var blogs = _DB_Contect.Blogs.AsNoTracking()
+                .Where(b => GetWhere.Contains(b.Id))
+                .Include(b => b.Author)
+                .Select(b => new BlogPostDto()
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Content = b.Content,
+                    AutherName = b.Author.UserName,
+                    CreationTime = b.CreatedAt,
+                    Premium = _DB_Contect.UserClaims.Any(c => c.UserId == b.AuthorId && c.ClaimType == "premium" && c.ClaimValue == "true"),
+                    NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
+                    NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None",
+                })
+                //   .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
                 .ToList();
 
                 return View(blogs);
             }
 
-            return View("IndexOut");
+            return RedirectToAction("Login");
+        }
+
+        [HttpGet("showmyclaim")]
+        public async Task<IActionResult> showmyclaim()
+        {
+            var _ClaimsManager = new ClaimsManager(_DB_Contect);
+
+            var languageClaimValue = _ClaimsManager.GetClaimValue(User.FindFirstValue(ClaimTypes.NameIdentifier), "Language");
+
+            if (languageClaimValue.Result == null)
+            {
+                return Json(new { success = false, message = "No language claim found" });
+            }
+
+            WelcomGuestService service = new WelcomGuestService(FactoryPresenter.GetPresenter(languageClaimValue.Result));
+
+            TempData["msg1"] = service.Welcome();
+
+            return RedirectToAction("show");
+
+        }
+
+        [HttpGet("language/ask/{languageclaim}")]
+        public async Task<IActionResult> LanguageClaimChange(string languageclaim)
+        {
+            var requiredClaim = ClaimsManager.GetLanguageClaim(languageclaim);
+
+            if (requiredClaim == null)
+            {
+                return Json(new { success = false, message = "Invalid language" });
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+
+            var _ClaimsManager = new ClaimsManager(_DB_Contect);
+
+            var hasClaim = await _ClaimsManager.HasClaimType(user.Id, requiredClaim.Type);
+
+            if (hasClaim is true)
+            {
+                // If the claim exists, replace it
+                var result = await _ClaimsManager.ChnageClaimValue(user.Id, requiredClaim);
+
+                if (result)
+                    return Json(new { success = true, message = "Claim updated successfully" });
+                else
+                    return Json(new { success = false, message = "Failed to update claim" });
+
+            }
+            else
+            {
+                var result = await _userManager.AddClaimAsync(user, requiredClaim);
+
+                if (result.Succeeded)
+                    return Json(new { success = true, message = "Claim added successfully" });
+
+                else
+                    return Json(new { success = false, message = "Failed to add claim" });
+
+            }
+
+        }
+
+        [HttpGet("AskForPremium")]
+        public async Task<IActionResult> AskForPremium()
+        {
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            if (userClaims.Any(c => c.Type == "premium" && c.Value == "true"))
+            {
+                return Json(new { success = false, message = "User is already premium" });
+            }
+
+            // Add the "premium" claim
+            var claim = new Claim("premium", "true");
+            var result = await _userManager.AddClaimAsync(user, claim);
+
+
+            if (result.Succeeded)
+            {
+                return Json(new { success = true, message = "User is now premium" });
+            }
+
+            return Json(new { success = false, message = "Failed to make user premium" });
+        }
+        [HttpGet("Admin")]
+        public async Task<IActionResult> Admin()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+
+                var userClaims = await _userManager.GetClaimsAsync(user);
+
+                if (userClaims.Any(c => c.Type == "admin" && c.Value == "true"))
+                {
+                    return Json(new { success = false, message = "you are admin" });
+                }
+                else
+                {
+                    var claim = new Claim("block", "true");
+                    var result = await _userManager.AddClaimAsync(user, claim);
+                    // sign him out
+                    await _signInManager.SignOutAsync();
+                    if (result.Succeeded)
+                    {
+                        return Json(new { success = true, message = "you are blocked for tring to get something that is not yours" });
+                    }
+                }
+            }
+            else return Json(new { success = false, message = "you are not authenticated" });
+
+            return Json(new { success = false, message = "Failed to make this request" });
+        }
+        [HttpPost]
+        public async Task<IActionResult> Reactions(int id, string value)
+        {
+            var user = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            bool found = await _DB_Contect.Reactions.AnyAsync(a => a.UserId == user && a.BlogPostId == id);
+
+            if (found)
+            {
+                var reaction = await _DB_Contect.Reactions.FirstAsync(a => a.UserId == user && a.BlogPostId == id);
+
+                string NormalizeTheSurrentState = reaction.IsLiked == 1 ? "like" : "dislike";
+
+                if (NormalizeTheSurrentState == value)
+                {
+                    _DB_Contect.Reactions.Remove(reaction);
+                    await _DB_Contect.SaveChangesAsync();
+
+                    var numofa = await _DB_Contect.Reactions
+                .Where(c => c.BlogPostId == id)
+                .GroupBy(g => 1)
+                .Select(g => new
+                {
+                    CLikes = g.Count(x => x.IsLiked == 1),
+                    CDisLikes = g.Count(x => x.IsLiked == 0)
+                })
+                .FirstOrDefaultAsync();
+
+                    return Json(new { success = true, numofLikes = numofa.CLikes, numofDislikes = numofa.CDisLikes });
+                }
+
+                reaction.IsLiked = value == "like" ? 1 : 0;
+
+                _DB_Contect.Reactions.Update(reaction);
+                await _DB_Contect.SaveChangesAsync();
+
+                var numofe = await _DB_Contect.Reactions
+                .Where(c => c.BlogPostId == id)
+                .GroupBy(g => 1)
+                .Select(g => new
+                {
+                    CLikes = g.Count(x => x.IsLiked == 1),
+                    CDisLikes = g.Count(x => x.IsLiked == 0)
+                })
+                .FirstOrDefaultAsync();
+
+                return Json(new { success = true, numofLikes = numofe.CLikes, numofDislikes = numofe.CDisLikes });
+            }
+
+            _DB_Contect.Reactions.Add(new Reaction()
+            {
+                BlogPostId = id,
+                UserId = user,
+                IsLiked = value == "like" ? 1 : 0
+            });
+
+            await _DB_Contect.SaveChangesAsync();
+
+
+
+            var numof = await _DB_Contect.Reactions
+                .Where(c => c.BlogPostId == id)
+                .GroupBy(g => 1)
+                .Select(g => new
+                {
+                    CLikes = g.Count(x => x.IsLiked == 1),
+                    CDisLikes = g.Count(x => x.IsLiked == 0)
+                })
+                .FirstOrDefaultAsync();
+
+            return Json(new { success = true, numofLikes = numof.CLikes, numofDislikes = numof.CDisLikes });
         }
         [HttpGet("MyBlog")]
         public async Task<IActionResult> MyBlog()
@@ -69,7 +399,9 @@ namespace Blogify.Controllers
                     Title = b.Title,
                     Content = b.Content,
                     AutherName = username,
-                    CreationTime = b.CreatedAt
+                    CreationTime = b.CreatedAt,
+                    Premium = _DB_Contect.UserClaims.Any(c => c.UserId == b.AuthorId && c.ClaimType == "premium" && c.ClaimValue == "true")
+
                 })
                 .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
                 .ToList();
@@ -91,13 +423,19 @@ namespace Blogify.Controllers
 
                 var blogs = _DB_Contect.Blogs.AsNoTracking()
                 .Where(b => b.AuthorId == _usernameFormId)
+                .Include(b => b.Reactions)
                 .Select(b => new BlogPostDto()
                 {
                     Id = b.Id,
                     Title = b.Title,
                     Content = b.Content,
                     AutherName = _username,
-                    CreationTime = b.CreatedAt
+                    CreationTime = b.CreatedAt,
+                    NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
+                    NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None",
+                    Premium = _DB_Contect.UserClaims.Any(c => c.UserId == b.AuthorId && c.ClaimType == "premium" && c.ClaimValue == "true")
+
                 })
                 .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
                 .ToList();
@@ -137,7 +475,7 @@ namespace Blogify.Controllers
             var randomname = "viewer_" + model[..5];
 
             var user = new IdentityUser { UserName = randomname, Email = randomname + "@gmail.com" };
-            var result = _userManager.CreateAsync(user, model).Result;
+            var result = _userManager.CreateAsync(user, "123456").Result;
 
             if (result.Succeeded)
             {
@@ -196,7 +534,35 @@ namespace Blogify.Controllers
 
             return RedirectToAction("login");
         }
+        [HttpGet("ShowBlog/{id}")]
+        public async Task<IActionResult> ShowBlog(string id)
+        {
+            var blogs = await _DB_Contect.Blogs.AsNoTracking()
+                .Where(b => b.Id == int.Parse(id))
+                .Include(b => b.Author)
+                .Include(b => b.Reactions)
+                .Select(b => new BlogPostDto()
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Content = b.Content,
+                    AutherName = b.Author.UserName,
+                    CreationTime = b.CreatedAt,
+                    NumOfLikes = b.Reactions.Count(q => q.IsLiked == 1),
+                    NumOfDisLikes = b.Reactions.Count(q => q.IsLiked == 0),
+                    IsLikedByCUser = b.Reactions.Any(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)) ? b.Reactions.First(q => q.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)).IsLiked == 1 ? "Like" : "Dislike" : "None"
+                })
+                .OrderByDescending(b => b.Id) // Order by Id descending (for reverse)
+                .FirstOrDefaultAsync();
 
+            if (blogs == null)
+            {
+                return RedirectToAction("Index");
+            }
+
+            return View(blogs);
+
+        }
         [HttpGet("delete/{id}")]
         public async Task<IActionResult> delete(string id)
         {
@@ -270,7 +636,7 @@ namespace Blogify.Controllers
                 return RedirectToAction("Show");
             }
 
-            await _userManager.RemoveClaimAsync(user, new Claim("IsBlocked", "true"));
+            await _userManager.RemoveClaimAsync(user, new Claim("block", "true"));
 
             return RedirectToAction("Index");
         }
@@ -301,7 +667,7 @@ namespace Blogify.Controllers
 
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Index");
+                    return RedirectToAction("IsAllOkay");
                 }
 
                 TempData["ErrorMessage"] = "Invalid Login Attempt";

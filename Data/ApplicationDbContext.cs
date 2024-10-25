@@ -13,5 +13,6 @@ namespace Blogify.Data
 
         public DbSet<BlogPost> Blogs { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
+        public DbSet<SeenBlog> SeenBlogs { get; set; }
     }
 }

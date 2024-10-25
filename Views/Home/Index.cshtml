@@ -4,8 +4,15 @@
 
 }
 
-@model List<BlogPostDto>
+@model TrendinFeed
 
 <div class="HomeFeed">
-    @await Html.PartialAsync("_PostsPartial", @Model);
+    <div class="Posts">
+		@await Html.PartialAsync("_PostsPartial", @Model.Feeds)
+    </div>
+
+    <div class="TrendingNow">
+        @await Html.PartialAsync("_TrendPartial", @Model.Trends)
+    </div>
+    
 </div>

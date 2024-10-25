@@ -19,8 +19,8 @@ html {
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
@@ -71,13 +71,43 @@ h1 {
 }
 .HomeFeed {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: space-around;
+  align-items: flex-start;
   padding-top: 30px;
+}
+h3 a {
+  color: hsl(0, 7%, 5%);
+  text-decoration: none;
+}
+h3 a:hover {
+  color: hsl(273, 49%, 47%);
+}
+.TrendingNow {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 1rem;
+  width: 350px;
+  position: sticky;
+  top: 25px;
+  border-radius: 5%;
+  background-color: hsla(273, 38%, 54%, 0.356);
+}
+.TrendingNow h2 {
+  margin: auto;
+  width: 130px;
+  font-size: 1rem;
+  text-align: center;
+  padding: .5rem;
+  border-radius: 50px;
+  background-color: hsla(273, 38%, 54%, 0.521);
+}
+.BlogTrend h3 {
+  font-size: 1.3rem;
 }
 .BlogPost {
   padding: 10px;
-  padding-bottom: 20px;
+  padding-bottom: 15px;
   width: 650px;
   box-shadow:  0 0 10px 0 rgba(0, 0, 0, 0.1);
   border-radius: 10px;
@@ -98,7 +128,9 @@ h1 {
   margin-bottom: 16px;
   padding-bottom: 12px;
 }
-
+.BlogTrend {
+  font-size: 1rem;
+}
 p {
   margin-bottom: 0;
 }
@@ -132,18 +164,21 @@ p {
   border-radius: 50%;
 }
 .time-post {
-  display: none;
-  transition: all 0.9s;
+  display: flex;
+  transition: all 0.4s;
   transform-origin: top right;
   justify-content: end;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   padding-right: 14px;
-  opacity: 0;
+  height: 0;
+  overflow: hidden;
 }
-.animati {
-  transition: all 0.5s;
-  animation: timeranimation .5s forwards;
+.BlogPost:hover .time-post {
+  height: 16.797px;
+  margin-bottom: 10px;
+  
 }
+
 .f-s-s {
   font-size: .7rem;
 }
@@ -151,17 +186,6 @@ p {
   font-size: .9rem;
 }
 
-@keyframes timeranimation {
-  from {
-    transform: scaleY(.8);
-    opacity: 0;
-  }
-  to {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  
-}
 
 .options-list a{
   color: hsl(273, 49%, 47%);
@@ -172,7 +196,7 @@ p {
 .options-list {
   display: none;
   position: absolute;
-  top: 30px;
+  top: 45px;
   right: 9px;
   background-color: #EBE0F3;
   width: 80px;
@@ -207,4 +231,30 @@ p {
 }
 .allfather {
   margin-top: 150px;
+}
+.content {
+  padding: 0px 0 20px 0;
+}
+.reaction {
+  padding-top: 10px;
+  border-top: #c2c3c452 1px solid;
+  display: flex;
+  gap: 7px;
+}
+.react {
+  font-size: .8rem;
+  transition: all 0.3s;
+  padding: 4px;
+  padding-inline: 8px;
+  color: white;
+  border-radius: 20px;
+  /* background-color: hsl(273, 49%, 47%); */
+  background-color: hsl(280, 2%, 66%);
+}
+p.ActedReaction  {
+  background-color: hsl(273, 39%, 27%);
+}
+.reaction p:hover {
+  cursor: pointer;
+  background-color: hsl(273, 39%, 27%);
 }

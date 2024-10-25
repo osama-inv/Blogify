@@ -7,7 +7,7 @@
 @model BlogPostDto
 
 <div class="HomeFeed">
-    @await Html.PartialAsync("_PostContent", @Model);
+    @await Html.PartialAsync("_PostContent", @Model)
     <form action="/delete/@Model.Id" method="post">
         <button type="submit" class="btn bg-blueviolet btn-submit">Delete</button>
     </form>

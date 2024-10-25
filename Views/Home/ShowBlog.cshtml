@@ -1,0 +1,25 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model BlogPostDto
+<div class="HomeFeed">
+<div class="BlogPost">
+    <div class="headPost">
+        <div class="info-bt">
+            <h3>@Model.Title</h3>
+            <p><a href="/blogger/@Model.AutherName" class="a-tag">@@@Model.AutherName</a></p>
+        </div>
+        <p class="f-s-m">@Model.CreationTime</p>
+    </div>
+    <div class="content">
+        <p>@Model.Content</p>
+    </div>
+    <div class="reaction">
+            <p data-Clikes="@Model.NumOfLikes" data-id="@Model.Id" data-value="like" class="react @(Model.IsLikedByCUser == "Like" ? "ActedReaction" : "")">@Model.NumOfLikes likes</p>
+            <p data-Cdislikes="@Model.NumOfDisLikes" data-id="@Model.Id" data-value="dislike" class="react @(Model.IsLikedByCUser == "Dislike" ? "ActedReaction" : "")">@Model.NumOfDisLikes dislikes</p>
+    </div>
+</div>
+</div>

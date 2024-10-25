@@ -14,9 +14,12 @@ namespace Blogify.Models
         public string Content { get; set; }
         public int NumOfLikes { get; set; }
         public int NumOfDisLikes { get; set; }
+        public int CountOfViews { get; set; }
         public string? AutherName { get; set; }
         public DateTime? CreationTime { get; set; }
         public string IsLikedByCUser { get; set; } = "None"; // "Like", "Dislike", "None"
+        public bool Premium { get; set; } // New property to indicate if the author is premium
+
         public BlogPostDto()
         {
 
